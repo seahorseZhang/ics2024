@@ -1,31 +1,33 @@
 /***************************************************************************************
-* Copyright (c) 2014-2024 Zihao Yu, Nanjing University
-*
-* NEMU is licensed under Mulan PSL v2.
-* You can use this software according to the terms and conditions of the Mulan PSL v2.
-* You may obtain a copy of Mulan PSL v2 at:
-*          http://license.coscl.org.cn/MulanPSL2
-*
-* THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-* EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-* MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-*
-* See the Mulan PSL v2 for more details.
-***************************************************************************************/
+ * Copyright (c) 2014-2024 Zihao Yu, Nanjing University
+ *
+ * NEMU is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan
+ *PSL v2. You may obtain a copy of Mulan PSL v2 at:
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY
+ *KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+ *NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ *
+ * See the Mulan PSL v2 for more details.
+ ***************************************************************************************/
 
-#include <isa.h>
-#include <cpu/cpu.h>
-#include <readline/readline.h>
-#include <readline/history.h>
 #include "sdb.h"
+#include <cpu/cpu.h>
+#include <isa.h>
+#include <memory/paddr.h>
+#include <readline/history.h>
+#include <readline/readline.h>
 
 static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
 
-/* We use the `readline' library to provide more flexibility to read from stdin. */
-static char* rl_gets() {
+/* We use the `readline' library to provide more flexibility to read from stdin.
+ */
+static char *rl_gets() {
   static char *line_read = NULL;
 
   if (line_read) {
@@ -47,7 +49,6 @@ static int cmd_c(char *args) {
   return 0;
 }
 
-
 static int cmd_q(char *args) {
   nemu_state.state = NEMU_QUIT;
   return -1;
@@ -64,15 +65,16 @@ static int cmd_mem(char *args);
 static struct {
   const char *name;
   const char *description;
-  int (*handler) (char *);
-} cmd_table [] = {
-  { "help", "Display information about all supported commands", cmd_help },
-  { "c", "Continue the execution of the program", cmd_c },
-  { "q", "Exit NEMU", cmd_q },
-  {"si", "cpu exec n step, default one", cmd_si},
-  {"info", "display some information about registers or watchpoints", cmd_info},
-  {"x", "display the value of specific addr", cmd_mem},
-  /* TODO: Add more commands */
+  int (*handler)(char *);
+} cmd_table[] = {
+    {"help", "Display information about all supported commands", cmd_help},
+    {"c", "Continue the execution of the program", cmd_c},
+    {"q", "Exit NEMU", cmd_q},
+    {"si", "cpu exec n step, default one", cmd_si},
+    {"info", "display some information about registers or watchpoints",
+     cmd_info},
+    {"x", "display the value of specific addr", cmd_mem},
+    /* TODO: Add more commands */
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -84,12 +86,11 @@ static int cmd_help(char *args) {
 
   if (arg == NULL) {
     /* no argument given */
-    for (i = 0; i < NR_CMD; i ++) {
+    for (i = 0; i < NR_CMD; i++) {
       printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
     }
-  }
-  else {
-    for (i = 0; i < NR_CMD; i ++) {
+  } else {
+    for (i = 0; i < NR_CMD; i++) {
       if (strcmp(arg, cmd_table[i].name) == 0) {
         printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
         return 0;
@@ -101,15 +102,15 @@ static int cmd_help(char *args) {
 }
 
 static int cmd_si(char *args) {
-    char *arg = strtok(NULL, " ");
-    long si_step;
-    if (arg == NULL) {
-      si_step = 1;
-    } else {
-      si_step = strtol(arg, NULL, 10);
-    }
-    cpu_exec(si_step);
-    return 0;
+  char *arg = strtok(NULL, " ");
+  long si_step;
+  if (arg == NULL) {
+    si_step = 1;
+  } else {
+    si_step = strtol(arg, NULL, 10);
+  }
+  cpu_exec(si_step);
+  return 0;
 }
 
 static int cmd_info(char *args) {
@@ -146,18 +147,17 @@ static int cmd_mem(char *args) {
     return -1;
   }
 
-  unsigned long addr = strtoul(hex_str, NULL, 16);
-  char *pointer = (char *)addr;
-  for(int index = 0; index < step; index++) {
-    printf("%02x", pointer[index]);
+  paddr_t guest_addr = (paddr_t)strtoul(hex_str, NULL, 16);
+  for (int index = 0; index < step; index++) {
+    uint8_t *phy_addr = guest_to_host(guest_addr);
+    guest_addr += sizeof(int8_t);
+    printf("%02x ", *phy_addr);
   }
   printf("\n");
   return 0;
 }
 
-void sdb_set_batch_mode() {
-  is_batch_mode = true;
-}
+void sdb_set_batch_mode() { is_batch_mode = true; }
 
 void sdb_mainloop() {
   if (is_batch_mode) {
@@ -165,12 +165,14 @@ void sdb_mainloop() {
     return;
   }
 
-  for (char *str; (str = rl_gets()) != NULL; ) {
+  for (char *str; (str = rl_gets()) != NULL;) {
     char *str_end = str + strlen(str);
 
     /* extract the first token as the command */
     char *cmd = strtok(str, " ");
-    if (cmd == NULL) { continue; }
+    if (cmd == NULL) {
+      continue;
+    }
 
     /* treat the remaining string as the arguments,
      * which may need further parsing
@@ -186,14 +188,18 @@ void sdb_mainloop() {
 #endif
 
     int i;
-    for (i = 0; i < NR_CMD; i ++) {
+    for (i = 0; i < NR_CMD; i++) {
       if (strcmp(cmd, cmd_table[i].name) == 0) {
-        if (cmd_table[i].handler(args) < 0) { return; }
+        if (cmd_table[i].handler(args) < 0) {
+          return;
+        }
         break;
       }
     }
 
-    if (i == NR_CMD) { printf("Unknown command '%s'\n", cmd); }
+    if (i == NR_CMD) {
+      printf("Unknown command '%s'\n", cmd);
+    }
   }
 }
 
