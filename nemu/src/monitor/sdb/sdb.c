@@ -140,13 +140,16 @@ static int cmd_mem(char *args) {
     printf("info command argument not right.\n");
     return -1;
   }
-  char *addr = strtok(NULL, " ");
-  if (addr == NULL) {
+  char *hex_str = strtok(NULL, " ");
+  if (hex_str == NULL) {
     printf("info command argument not right. \n");
     return -1;
   }
+
+  unsigned long addr = strtoul(hex_str, NULL, 16);
   for(int index = 0; index < step; index++) {
-    printf("%02x ", addr[index]);
+    printf("%02x ", *(char *)addr);
+    addr += sizeof(char);
   }
   printf("\n");
   return 0;
