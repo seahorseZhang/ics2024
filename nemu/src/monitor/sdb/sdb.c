@@ -55,6 +55,10 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args);
+
+static int cmd_info(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -63,9 +67,9 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-
+  {"si", "cpu exec n step, default one", cmd_si},
+  {"info", "display some information about registers or watchpoints", cmd_info},
   /* TODO: Add more commands */
-
 };
 
 #define NR_CMD ARRLEN(cmd_table)
@@ -91,6 +95,35 @@ static int cmd_help(char *args) {
     printf("Unknown command '%s'\n", arg);
   }
   return 0;
+}
+
+static int cmd_si(char *args) {
+    char *arg = strtok(NULL, " ");
+    long si_step;
+    if (arg == NULL) {
+      si_step = 1;
+    } else {
+      si_step = strtol(arg, NULL, 10);
+    }
+    cpu_exec(si_step);
+    return 0;
+}
+
+static int cmd_info(char *args) {
+  char *arg = strtok(NULL, " ");
+  if (arg == NULL) {
+    goto EXIT;
+  }
+  if (strcmp(arg, "r") == 0) {
+    isa_reg_display();
+    return 0;
+  } else if (strcmp(arg, "w") == 0) {
+    // todo: print watch point
+    return 0;
+  }
+EXIT:
+  printf("info command argumnent not right, arg: '%s'\n", arg);
+  return -1;
 }
 
 void sdb_set_batch_mode() {
