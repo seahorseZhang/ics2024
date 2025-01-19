@@ -22,7 +22,7 @@ const char *regs[] = {"$0", "ra", "sp",  "gp",  "tp", "t0", "t1", "t2",
                       "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"};
 
 void isa_reg_display() {
-  int regNum = ARRLEN(regs);
+  int regNum = MUXDEF(CONFIG_RVE, 16, 32);
   for (int index = 0; index < regNum; index++) {
     printf("%s: %lu \n", reg_name(index), gpr(index));
   }
