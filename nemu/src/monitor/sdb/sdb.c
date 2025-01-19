@@ -147,9 +147,9 @@ static int cmd_mem(char *args) {
   }
 
   unsigned long addr = strtoul(hex_str, NULL, 16);
+  char *pointer = (char *)addr;
   for(int index = 0; index < step; index++) {
-    printf("%02x ", *(char *)addr);
-    addr += sizeof(char);
+    printf("%02x", pointer[index]);
   }
   printf("\n");
   return 0;
