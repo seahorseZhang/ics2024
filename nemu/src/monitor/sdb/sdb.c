@@ -148,6 +148,7 @@ static int cmd_mem(char *args) {
   for(int index = 0; index < step; index++) {
     printf("%2x ", addr[index]);
   }
+  printf("\n");
   return 0;
 }
 
