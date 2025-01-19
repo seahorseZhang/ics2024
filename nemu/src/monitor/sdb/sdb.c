@@ -59,6 +59,8 @@ static int cmd_si(char *args);
 
 static int cmd_info(char *args);
 
+static int cmd_mem(char *args);
+
 static struct {
   const char *name;
   const char *description;
@@ -69,6 +71,7 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
   {"si", "cpu exec n step, default one", cmd_si},
   {"info", "display some information about registers or watchpoints", cmd_info},
+  {"x", "display the value of specific addr", cmd_mem},
   /* TODO: Add more commands */
 };
 
@@ -124,6 +127,28 @@ static int cmd_info(char *args) {
 EXIT:
   printf("info command argumnent not right, arg: '%s'\n", arg);
   return -1;
+}
+
+static int cmd_mem(char *args) {
+  char *arg = strtok(NULL, " ");
+  if (arg == NULL) {
+    printf("info command argument not right.\n");
+    return -1;
+  }
+  int step = atoi(arg);
+  if (step == 0) {
+    printf("info command argument not right.\n");
+    return -1;
+  }
+  char *addr = strtok(NULL, " ");
+  if (addr == NULL) {
+    printf("info command argument not right. \n");
+    return -1;
+  }
+  for(int index = 0; index < step; index++) {
+    printf("%2x ", addr[index]);
+  }
+  return 0;
 }
 
 void sdb_set_batch_mode() {
